@@ -66,6 +66,13 @@ like this:
             # Client Secret
             'consumer_secret': '1a9…'
         },
+        # http://developers.douban.com/apikey/
+        "flask_social_blueprint.providers.Douban": {
+            # Client ID
+            'consumer_key': '6f6…',
+            # Client Secret
+            'consumer_secret': '1a9…'
+        },
     }
 
 Done!
@@ -171,6 +178,7 @@ main URL http://dev.example.com:5055 and callbacks URLS like these:
 - http://dev.example.com:5055/_social/callback/Facebook
 - http://dev.example.com:5055/_social/callback/Twitter
 - http://dev.example.com:5055/_social/callback/Github
+- http://dev.example.com:5055/_social/callback/Douban
 
 Twitter
 ^^^^^^^
@@ -189,6 +197,11 @@ GitHub
 ^^^^^^
 
 Create new application here: https://github.com/settings/applications/new
+
+Douban
+^^^^^^
+
+Create new application here: http://developers.douban.com/apikey/apply
 
 Facebook
 ^^^^^^^^
