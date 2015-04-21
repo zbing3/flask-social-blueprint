@@ -1,12 +1,12 @@
 # coding=utf-8
 # Copyright 2013 Janusz Skonieczny
-from importlib import import_module
 import logging
 
 from flask_oauth import OAuthRemoteApp
 from flask_babel import gettext as _
 
-DEFAULT_PROPERTIES = ("user_id", "display_name", "first_name", "last_name", "email", "image_url")
+DEFAULT_PROPERTIES = ("user_id", "display_name",
+                      "first_name", "last_name", "email", "image_url")
 
 
 class BaseProvider(OAuthRemoteApp):
@@ -148,8 +148,10 @@ class Facebook(BaseProvider):
             "first_name": profile.get('first_name'),
             "last_name": profile.get('last_name'),
             "cn": profile.get('name'),
-            "profile_url": "http://facebook.com/profile.php?id={}".format(profile_id),
-            "image_url": "http://graph.facebook.com/{}/picture".format(profile_id),
+            "profile_url": ("http://facebook.com/profile.php?id={}"
+                            .format(profile_id)),
+            "image_url": ("http://graph.facebook.com/{}/picture"
+                          .format(profile_id)),
         }
         return ExternalProfile(profile_id, data, raw_data)
 
@@ -176,14 +178,17 @@ class Github(BaseProvider):
 
         import requests
         import json
-        r = requests.get('https://api.github.com/user?access_token={}'.format(access_token))
+        r = requests.get('https://api.github.com/user?access_token={}'
+                         .format(access_token))
         if not r.ok:
             raise Exception(_("Could not load profile data from Github API"))
         profile = json.loads(r.text or r.content)
 
-        r = requests.get('https://api.github.com/user/emails?access_token={}'.format(access_token))
+        r = requests.get('https://api.github.com/user/emails?access_token={}'
+                         .format(access_token))
         if not r.ok:
-            raise Exception(_("Could not load emails data from from Github API"))
+            raise Exception(_("Could not load emails data"
+                              "from from Github API"))
         emails = json.loads(r.text or r.content)
 
         name_split = profile.get('name', "").split(" ", 1)
@@ -201,3 +206,51 @@ class Github(BaseProvider):
             "image_url": profile["avatar_url"],
         }
         return ExternalProfile(str(profile['id']), data, raw_data)
+
+
+class Douban(BaseProvider):
+    def __init__(self, *args, **kwargs):
+        defaults = {
+            'name': 'Douban',
+            'base_url': 'https://api.douban.com',
+            'authorize_url': 'https://www.douban.com/service/auth2/auth',
+            'request_token_params': {
+                'response_type': 'code',
+                'scope': 'douban_basic_common'
+            },
+            'access_token_url': 'https://www.douban.com/service/auth2/token',
+            'access_token_method': 'POST',
+            'access_token_params': {
+                'grant_type': 'authorization_code',
+            },
+            'request_token_url': None,
+        }
+        defaults.update(kwargs)
+        super(Douban, self).__init__(*args, **defaults)
+
+    def get_profile(self, raw_data):
+        logging.debug("raw_data: %s" % raw_data)
+        access_token = raw_data['access_token']
+
+        import requests
+        import json
+        header = {
+            'Authorization': "Bearer " + access_token,
+        }
+        r = requests.get('https://api.douban.com/v2/user/~me', headers=header)
+        if not r.ok:
+            raise Exception("Could not load profile data from Douban API")
+        profile = json.loads(r.text or r.content)
+
+        data = {
+            "provider": "Douban",
+            "profile_id": profile.get("id"),
+            "username": profile.get("uid"),
+            "cn": profile.get("name"),
+            "image_url": profile.get("avatar"),
+            "profile_url": profile.get("alt"),
+            "access_token": access_token,
+            "secret": None,
+            "email": None,
+        }
+        return ExternalProfile(profile.get('id'), data, raw_data)

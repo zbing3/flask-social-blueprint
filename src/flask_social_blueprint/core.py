@@ -14,8 +14,10 @@ logger = logging.getLogger("flask_social_blueprint")
 
 
 class SocialBlueprint(Blueprint):
-    def __init__(self, name, import_name, connection_adapter=None, providers=None, *args, **kwargs):
-        super(SocialBlueprint, self).__init__(name, import_name, *args, **kwargs)
+    def __init__(self, name, import_name,
+                 connection_adapter=None, providers=None, *args, **kwargs):
+        super(SocialBlueprint, self).__init__(name, import_name,
+                                              *args, **kwargs)
         self.connection_adapter = connection_adapter
         self.providers = providers or {}
 
@@ -78,7 +80,8 @@ class SocialBlueprint(Blueprint):
 
     @classmethod
     def create_bp(cls, name, connection_adapter, providers, *args, **kwargs):
-        bp = SocialBlueprint(name, __name__, connection_adapter, providers, *args, **kwargs)
+        bp = SocialBlueprint(name, __name__, connection_adapter,
+                             providers, *args, **kwargs)
         bp.route('/login/<provider>', endpoint="login")(bp.authenticate)
         bp.route('/callback/<provider>', endpoint="callback")(bp.callback)
         return bp
@@ -98,9 +101,9 @@ class SocialBlueprint(Blueprint):
     def init_bp(cls, app, connection_adapter, *args, **kwargs):
         config = app.config.get("SOCIAL_BLUEPRINT")
         providers = cls.setup_providers(config)
-        bp = cls.create_bp('social', connection_adapter, providers, *args, **kwargs)
+        bp = cls.create_bp('social', connection_adapter,
+                           providers, *args, **kwargs)
         app.register_blueprint(bp)
 
 
 bp = LocalProxy(lambda: current_app.blueprints[request.blueprint])
-
