@@ -10,6 +10,7 @@ DEFAULT_PROPERTIES = ("user_id", "display_name",
 
 
 class BaseProvider(OAuthRemoteApp):
+
     def __init__(self, *args, **kwargs):
 
         super(BaseProvider, self).__init__(None, *args, **kwargs)
@@ -19,6 +20,7 @@ class BaseProvider(OAuthRemoteApp):
 
 
 class ExternalProfile(object):
+
     def __init__(self, profile_id, data, raw_data):
         self.id = profile_id
         self.data = data
@@ -26,6 +28,7 @@ class ExternalProfile(object):
 
 
 class Twitter(BaseProvider):
+
     def __init__(self, *args, **kwargs):
         defaults = {
             'name': 'Twitter',
@@ -66,6 +69,7 @@ class Twitter(BaseProvider):
 
 
 class Google(BaseProvider):
+
     def __init__(self, *args, **kwargs):
         defaults = {
             'name': 'Google',
@@ -117,6 +121,7 @@ class Google(BaseProvider):
 
 
 class Facebook(BaseProvider):
+
     def __init__(self, *args, **kwargs):
         defaults = {
             'name': 'Facebook',
@@ -157,6 +162,7 @@ class Facebook(BaseProvider):
 
 
 class Github(BaseProvider):
+
     def __init__(self, *args, **kwargs):
         defaults = {
             'name': 'Github',
@@ -209,6 +215,7 @@ class Github(BaseProvider):
 
 
 class Douban(BaseProvider):
+
     def __init__(self, *args, **kwargs):
         defaults = {
             'name': 'Douban',
@@ -249,6 +256,54 @@ class Douban(BaseProvider):
             "cn": profile.get("name"),
             "image_url": profile.get("avatar"),
             "profile_url": profile.get("alt"),
+            "access_token": access_token,
+            "secret": None,
+            "email": None,
+        }
+        return ExternalProfile(profile.get('id'), data, raw_data)
+
+
+class Weibo(BaseProvider):
+
+    def __init__(self, *args, **kwargs):
+        defaults = {
+            'name': 'Weibo',
+            'base_url': 'https://api.weibo.com',
+            'authorize_url': 'https://api.weibo.com/oauth2/authorize',
+            'request_token_params': {
+                'response_type': 'code'
+            },
+            'access_token_url': 'https://api.weibo.com/oauth2/access_token',
+            'access_token_method': 'POST',
+            'access_token_params': {
+                'grant_type': 'authorization_code',
+            },
+            'request_token_url': None,
+        }
+        defaults.update(kwargs)
+        super(Weibo, self).__init__(*args, **defaults)
+
+    def get_profile(self, raw_data):
+        logging.debug("raw_data: %s" % raw_data)
+        raw_data = eval(raw_data.keys()[0])
+        access_token = raw_data['access_token']
+        uid = raw_data['uid']
+
+        import requests
+        import json
+        r = requests.get(
+            'https://api.weibo.com/2/users/show.json?uid={}&access_token={}'
+            .format(uid, access_token))
+        if not r.ok:
+            raise Exception("Could not load profile data from Weibo API")
+        profile = json.loads(r.text or r.content)
+        data = {
+            "provider": "Weibo",
+            "profile_id": profile.get("id"),
+            "username": profile.get("screen_name"),
+            "cn": profile.get("name"),
+            "image_url": profile.get("avatar_large"),
+            "profile_url": "http://weibo.com/" + profile.get("domain"),
             "access_token": access_token,
             "secret": None,
             "email": None,
